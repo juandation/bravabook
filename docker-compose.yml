@@ -19,18 +19,41 @@ services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: bravabook-api
+      dockerfile: Dockerfile.dev
+    container_name: bravabook-api-dev
     ports:
-      - '3000:3000'
+      - '5001:5001'
+      - '9229:9229'
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       MONGODB_URI: mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD:-password}@mongodb:27017/${MONGO_DATABASE:-bravabook}?authSource=admin
+    volumes:
+      - .:/app
+      - api_node_modules:/app/node_modules
     depends_on:
       - mongodb
-    restart: unless-stopped
     networks:
       - bravabook-network
+    command: npm run dev:server
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client.dev
+    container_name: bravabook-client-dev
+    ports:
+      - '5173:5173'
+    volumes:
+      - .:/app
+      - client_node_modules:/app/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=/api
+    depends_on:
+      - api
+    networks:
+      - bravabook-network
+    command: npm run dev:client
 
 networks:
   bravabook-network:
@@ -39,3 +62,5 @@ networks:
 volumes:
   mongodb_data:
     name: mongodb_data
+  client_node_modules:
+  api_node_modules:
